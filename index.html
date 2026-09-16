@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Type the Number</title>
+<style>
+  :root {
+    --bg: #f2f4f3;
+    --ink: #14181a;
+    --muted: #6b7678;
+    --line: #d5dad8;
+    --field: #ffffff;
+    --hit: #1f7a4d;
+    --miss: #b23b2e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101314;
+      --ink: #eef1f0;
+      --muted: #8d9897;
+      --line: #262c2d;
+      --field: #181c1d;
+      --hit: #4bc28a;
+      --miss: #e0705f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2rem 1.25rem;
+  }
+  main {
+    width: 100%;
+    max-width: 30rem;
+    text-align: center;
+  }
+  .target {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    font-weight: 600;
+    font-size: clamp(3.5rem, 18vw, 7rem);
+    letter-spacing: 0.06em;
+    line-height: 1;
+    margin: 0 0 1.5rem;
+    transition: color 120ms linear;
+  }
+  .target.hit { color: var(--hit); }
+  .target.miss { color: var(--miss); animation: nudge 220ms ease; }
+  @keyframes nudge {
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .target.miss { animation: none; }
+  }
+  input {
+    width: 100%;
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: inherit;
+    font: inherit;
+    font-size: 1.75rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    outline-offset: 3px;
+  }
+  input:focus-visible { outline: 2px solid var(--ink); }
+  .hint {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0.75rem 0 0;
+    min-height: 1.2em;
+  }
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+  .stats div { display: flex; flex-direction: column; gap: 0.25rem; }
+  .stats b {
+    font-size: 1.4rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .stats span { color: var(--muted); font-size: 0.8rem; }
+  .lengths { display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem; }
+  .lengths button {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.85rem;
+  }
+  .lengths button[aria-pressed="true"] {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+</style>
+</head>
+<body>
+<main>
+  <p class="target" id="target" aria-live="polite">0000</p>
+  <input id="entry" type="text" inputmode="numeric" autocomplete="off" autocorrect="off"
+         spellcheck="false" aria-label="Type the number shown above">
+  <p class="hint" id="hint">Type it. A new number appears when you get it right.</p>
+
+  <div class="stats">
+    <div><b id="streak">0</b><span>streak</span></div>
+    <div><b id="best">0</b><span>best</span></div>
+    <div><b id="total">0</b><span>solved</span></div>
+  </div>
+
+  <div class="lengths" id="lengths" role="group" aria-label="Number length">
+    <button type="button" data-len="3">3 digits</button>
+    <button type="button" data-len="4">4 digits</button>
+    <button type="button" data-len="5">5 digits</button>
+    <button type="button" data-len="6">6 digits</button>
+  </div>
+</main>
+
+<script>
+(function () {
+  var targetEl = document.getElementById('target');
+  var entry = document.getElementById('entry');
+  var hint = document.getElementById('hint');
+  var streakEl = document.getElementById('streak');
+  var bestEl = document.getElementById('best');
+  var totalEl = document.getElementById('total');
+  var lengths = document.getElementById('lengths');
+
+  var state = { len: 4, current: '', streak: 0, best: 0, total: 0 };
+
+  function load() {
+    try {
+      var raw = localStorage.getItem('number-game');
+      if (raw) {
+        var saved = JSON.parse(raw);
+        state.best = saved.best || 0;
+        state.total = saved.total || 0;
+        state.len = saved.len || 4;
+      }
+    } catch (e) {}
+  }
+
+  function save() {
+    try {
+      localStorage.setItem('number-game', JSON.stringify({
+        best: state.best, total: state.total, len: state.len
+      }));
+    } catch (e) {}
+  }
+
+  function newNumber() {
+    var n = '';
+    var digits = new Uint8Array(state.len);
+    if (window.crypto && crypto.getRandomValues) {
+      crypto.getRandomValues(digits);
+      for (var i = 0; i < state.len; i++) n += (digits[i] % 10);
+    } else {
+      for (var j = 0; j < state.len; j++) n += Math.floor(Math.random() * 10);
+    }
+    if (n === state.current) return newNumber();
+    state.current = n;
+    targetEl.textContent = n;
+  }
+
+  function render() {
+    streakEl.textContent = state.streak;
+    bestEl.textContent = state.best;
+    totalEl.textContent = state.total;
+  }
+
+  function flash(cls) {
+    targetEl.classList.remove('hit', 'miss');
+    void targetEl.offsetWidth;
+    targetEl.classList.add(cls);
+    setTimeout(function () { targetEl.classList.remove(cls); }, 300);
+  }
+
+  entry.addEventListener('input', function () {
+    var val = entry.value.replace(/\D/g, '');
+    entry.value = val;
+    if (val.length < state.current.length) return;
+
+    if (val === state.current) {
+      state.streak++;
+      state.total++;
+      if (state.streak > state.best) state.best = state.streak;
+      flash('hit');
+      hint.textContent = 'Correct.';
+      newNumber();
+    } else {
+      state.streak = 0;
+      flash('miss');
+      hint.textContent = 'Wrong. Same number, try again.';
+    }
+    entry.value = '';
+    render();
+    save();
+  });
+
+  lengths.addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    state.len = Number(btn.dataset.len);
+    state.streak = 0;
+    entry.value = '';
+    hint.textContent = state.len + ' digits now.';
+    setLengthButtons();
+    newNumber();
+    render();
+    save();
+    entry.focus();
+  });
+
+  function setLengthButtons() {
+    Array.prototype.forEach.call(lengths.querySelectorAll('button'), function (b) {
+      b.setAttribute('aria-pressed', Number(b.dataset.len) === state.len);
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('button')) entry.focus();
+  });
+
+  load();
+  setLengthButtons();
+  newNumber();
+  render();
+  entry.focus();
+})();
+</script>
+</body>
+</html>
