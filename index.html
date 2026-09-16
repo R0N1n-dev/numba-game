@@ -13,6 +13,9 @@
     --field: #ffffff;
     --hit: #1f7a4d;
     --miss: #b23b2e;
+    --fur: #e8883f;
+    --fur-dark: #c96c2c;
+    --fur-light: #fbe7d2;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -23,6 +26,9 @@
       --field: #181c1d;
       --hit: #4bc28a;
       --miss: #e0705f;
+      --fur: #e8883f;
+      --fur-dark: #b75f25;
+      --fur-light: #f6dcc3;
     }
   }
   * { box-sizing: border-box; }
@@ -33,36 +39,78 @@
     color: var(--ink);
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
     padding: 2rem 1.25rem;
   }
-  main {
-    width: 100%;
-    max-width: 30rem;
-    text-align: center;
+  main { width: 100%; max-width: 30rem; text-align: center; }
+
+  /* --- critter --- */
+  .friend { width: 148px; height: 128px; margin: 0 auto 0.5rem; display: block; overflow: visible; }
+  .friend .body { transform-origin: 74px 120px; }
+  .friend .ear-l { transform-origin: 48px 44px; }
+  .friend .ear-r { transform-origin: 100px 44px; }
+  .friend .eye-open { opacity: 1; }
+  .friend .eye-happy { opacity: 0; }
+  .friend .spark { opacity: 0; transform-origin: 74px 62px; }
+  .friend .mouth-idle { opacity: 1; }
+  .friend .mouth-cheer { opacity: 0; }
+
+  .friend.cheer .body { animation: hop 620ms cubic-bezier(.3,.9,.4,1); }
+  .friend.cheer .ear-l { animation: wiggle-l 620ms ease; }
+  .friend.cheer .ear-r { animation: wiggle-r 620ms ease; }
+  .friend.cheer .eye-open { opacity: 0; }
+  .friend.cheer .eye-happy { opacity: 1; }
+  .friend.cheer .mouth-idle { opacity: 0; }
+  .friend.cheer .mouth-cheer { opacity: 1; }
+  .friend.cheer .spark { animation: pop 620ms ease-out; }
+  .friend.oops .body { animation: shake 320ms ease; }
+
+  @keyframes hop {
+    0%   { transform: translateY(0) scale(1, 1); }
+    18%  { transform: translateY(4px) scale(1.08, .9); }
+    45%  { transform: translateY(-26px) scale(.95, 1.07); }
+    72%  { transform: translateY(0) scale(1.06, .94); }
+    100% { transform: translateY(0) scale(1, 1); }
   }
+  @keyframes wiggle-l {
+    0%, 100% { transform: rotate(0); }
+    40% { transform: rotate(-16deg); }
+    70% { transform: rotate(6deg); }
+  }
+  @keyframes wiggle-r {
+    0%, 100% { transform: rotate(0); }
+    40% { transform: rotate(16deg); }
+    70% { transform: rotate(-6deg); }
+  }
+  @keyframes pop {
+    0%   { opacity: 0; transform: scale(.4); }
+    35%  { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(1.35); }
+  }
+  @keyframes shake {
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .friend.cheer .body, .friend.cheer .ear-l, .friend.cheer .ear-r,
+    .friend.oops .body { animation: none; }
+    .friend.cheer .spark { animation: none; opacity: 1; }
+  }
+
   .target {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
     font-weight: 600;
-    font-size: clamp(3.5rem, 18vw, 7rem);
+    font-size: clamp(3.5rem, 18vw, 6.5rem);
     letter-spacing: 0.06em;
     line-height: 1;
-    margin: 0 0 1.5rem;
+    margin: 0 0 1.25rem;
     transition: color 120ms linear;
   }
   .target.hit { color: var(--hit); }
-  .target.miss { color: var(--miss); animation: nudge 220ms ease; }
-  @keyframes nudge {
-    25% { transform: translateX(-6px); }
-    75% { transform: translateX(6px); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .target.miss { animation: none; }
-  }
+  .target.miss { color: var(--miss); }
+
   input {
     width: 100%;
     background: var(--field);
@@ -78,28 +126,21 @@
     outline-offset: 3px;
   }
   input:focus-visible { outline: 2px solid var(--ink); }
-  .hint {
-    color: var(--muted);
-    font-size: 0.9rem;
-    margin: 0.75rem 0 0;
-    min-height: 1.2em;
-  }
+  .hint { color: var(--muted); font-size: 0.9rem; margin: 0.75rem 0 0; min-height: 1.2em; }
+
   .stats {
     display: flex;
     justify-content: center;
     gap: 2.5rem;
-    margin-top: 2.5rem;
+    margin-top: 2.25rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--line);
   }
   .stats div { display: flex; flex-direction: column; gap: 0.25rem; }
-  .stats b {
-    font-size: 1.4rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-  }
+  .stats b { font-size: 1.4rem; font-weight: 600; font-variant-numeric: tabular-nums; }
   .stats span { color: var(--muted); font-size: 0.8rem; }
-  .lengths { display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem; }
+
+  .lengths { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.75rem; }
   .lengths button {
     background: none;
     border: 1px solid var(--line);
@@ -110,18 +151,51 @@
     font-size: 0.85rem;
     padding: 0.35rem 0.85rem;
   }
-  .lengths button[aria-pressed="true"] {
-    border-color: var(--ink);
-    color: var(--ink);
-  }
+  .lengths button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); }
 </style>
 </head>
 <body>
 <main>
+  <svg class="friend" id="friend" viewBox="0 0 148 128" role="img" aria-hidden="true">
+    <g class="spark" fill="none" stroke="var(--fur-dark)" stroke-width="4" stroke-linecap="round">
+      <path d="M22 44 L12 38"/><path d="M26 28 L20 18"/><path d="M42 20 L40 9"/>
+      <path d="M126 44 L136 38"/><path d="M122 28 L128 18"/><path d="M106 20 L108 9"/>
+    </g>
+    <g class="body">
+      <!-- tail -->
+      <path d="M104 106 q30 6 26 -22 q-3 16 -24 12z" fill="var(--fur-dark)"/>
+      <!-- ears -->
+      <g class="ear-l"><path d="M40 60 L44 22 L66 42z" fill="var(--fur)"/>
+        <path d="M46 52 L48 33 L59 44z" fill="var(--fur-light)"/></g>
+      <g class="ear-r"><path d="M108 60 L104 22 L82 42z" fill="var(--fur)"/>
+        <path d="M102 52 L100 33 L89 44z" fill="var(--fur-light)"/></g>
+      <!-- head -->
+      <path d="M74 36 c26 0 36 18 36 36 c0 26 -16 44 -36 44 c-20 0 -36 -18 -36 -44 c0 -18 10 -36 36 -36z" fill="var(--fur)"/>
+      <!-- snout -->
+      <path d="M74 74 c14 0 20 10 20 20 c0 12 -9 20 -20 20 c-11 0 -20 -8 -20 -20 c0 -10 6 -20 20 -20z" fill="var(--fur-light)"/>
+      <!-- eyes -->
+      <g class="eye-open" fill="#24292b">
+        <circle cx="59" cy="69" r="6"/><circle cx="89" cy="69" r="6"/>
+      </g>
+      <g class="eye-happy" fill="none" stroke="#24292b" stroke-width="4" stroke-linecap="round">
+        <path d="M52 71 q7 -10 14 0"/><path d="M82 71 q7 -10 14 0"/>
+      </g>
+      <!-- nose -->
+      <ellipse cx="74" cy="88" rx="7" ry="5.5" fill="#24292b"/>
+      <!-- mouth -->
+      <path class="mouth-idle" d="M74 93 v4 M74 97 q-7 5 -12 0 M74 97 q7 5 12 0"
+            fill="none" stroke="#24292b" stroke-width="3" stroke-linecap="round"/>
+      <path class="mouth-cheer" d="M63 97 q11 14 22 0 q-11 5 -22 0z" fill="#24292b"/>
+      <!-- cheeks -->
+      <circle cx="50" cy="86" r="5" fill="#f2a9a0" opacity=".65"/>
+      <circle cx="98" cy="86" r="5" fill="#f2a9a0" opacity=".65"/>
+    </g>
+  </svg>
+
   <p class="target" id="target" aria-live="polite">0000</p>
   <input id="entry" type="text" inputmode="numeric" autocomplete="off" autocorrect="off"
          spellcheck="false" aria-label="Type the number shown above">
-  <p class="hint" id="hint">Type it. A new number appears when you get it right.</p>
+  <p class="hint" id="hint">Type the number. Get it right and Pip jumps.</p>
 
   <div class="stats">
     <div><b id="streak">0</b><span>streak</span></div>
@@ -130,10 +204,11 @@
   </div>
 
   <div class="lengths" id="lengths" role="group" aria-label="Number length">
+    <button type="button" data-len="1">1 digit</button>
+    <button type="button" data-len="2">2 digits</button>
     <button type="button" data-len="3">3 digits</button>
     <button type="button" data-len="4">4 digits</button>
     <button type="button" data-len="5">5 digits</button>
-    <button type="button" data-len="6">6 digits</button>
   </div>
 </main>
 
@@ -142,25 +217,27 @@
   var targetEl = document.getElementById('target');
   var entry = document.getElementById('entry');
   var hint = document.getElementById('hint');
+  var friend = document.getElementById('friend');
   var streakEl = document.getElementById('streak');
   var bestEl = document.getElementById('best');
   var totalEl = document.getElementById('total');
   var lengths = document.getElementById('lengths');
 
-  var state = { len: 4, current: '', streak: 0, best: 0, total: 0 };
+  var cheers = ['Nice one.', 'Got it.', 'Pip is pleased.', 'Keep going.', 'That was quick.'];
+  var state = { len: 3, current: '', streak: 0, best: 0, total: 0 };
+  var timer = null;
 
   function load() {
     try {
       var raw = localStorage.getItem('number-game');
       if (raw) {
-        var saved = JSON.parse(raw);
-        state.best = saved.best || 0;
-        state.total = saved.total || 0;
-        state.len = saved.len || 4;
+        var s = JSON.parse(raw);
+        state.best = s.best || 0;
+        state.total = s.total || 0;
+        state.len = s.len || 3;
       }
     } catch (e) {}
   }
-
   function save() {
     try {
       localStorage.setItem('number-game', JSON.stringify({
@@ -171,14 +248,8 @@
 
   function newNumber() {
     var n = '';
-    var digits = new Uint8Array(state.len);
-    if (window.crypto && crypto.getRandomValues) {
-      crypto.getRandomValues(digits);
-      for (var i = 0; i < state.len; i++) n += (digits[i] % 10);
-    } else {
-      for (var j = 0; j < state.len; j++) n += Math.floor(Math.random() * 10);
-    }
-    if (n === state.current) return newNumber();
+    for (var i = 0; i < state.len; i++) n += Math.floor(Math.random() * 10);
+    if (state.len > 1 && n === state.current) return newNumber();
     state.current = n;
     targetEl.textContent = n;
   }
@@ -189,11 +260,17 @@
     totalEl.textContent = state.total;
   }
 
-  function flash(cls) {
+  function react(good) {
+    clearTimeout(timer);
+    friend.classList.remove('cheer', 'oops');
     targetEl.classList.remove('hit', 'miss');
-    void targetEl.offsetWidth;
-    targetEl.classList.add(cls);
-    setTimeout(function () { targetEl.classList.remove(cls); }, 300);
+    void friend.offsetWidth;
+    friend.classList.add(good ? 'cheer' : 'oops');
+    targetEl.classList.add(good ? 'hit' : 'miss');
+    timer = setTimeout(function () {
+      friend.classList.remove('cheer', 'oops');
+      targetEl.classList.remove('hit', 'miss');
+    }, good ? 900 : 400);
   }
 
   entry.addEventListener('input', function () {
@@ -205,13 +282,13 @@
       state.streak++;
       state.total++;
       if (state.streak > state.best) state.best = state.streak;
-      flash('hit');
-      hint.textContent = 'Correct.';
+      hint.textContent = cheers[Math.floor(Math.random() * cheers.length)];
+      react(true);
       newNumber();
     } else {
       state.streak = 0;
-      flash('miss');
-      hint.textContent = 'Wrong. Same number, try again.';
+      hint.textContent = 'Not quite. Same number, try again.';
+      react(false);
     }
     entry.value = '';
     render();
@@ -224,7 +301,7 @@
     state.len = Number(btn.dataset.len);
     state.streak = 0;
     entry.value = '';
-    hint.textContent = state.len + ' digits now.';
+    hint.textContent = state.len === 1 ? 'One digit now.' : state.len + ' digits now.';
     setLengthButtons();
     newNumber();
     render();
